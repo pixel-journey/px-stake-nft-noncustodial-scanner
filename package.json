@@ -1,0 +1,14 @@
+{
+  "name": "px-stake-nft-noncustodial-scanner",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Educational lab: NFT stays in wallet; claim needs matching chain owner; settle clears stale rows",
+  "scripts": {
+    "test": "node --experimental-strip-types --test invariants/*.test.ts"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT"
+}
