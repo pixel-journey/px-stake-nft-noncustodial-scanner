@@ -1,11 +1,20 @@
-# Security notes
+# Security
 
-| Issue | Lab mitigation |
-|-------|----------------|
-| Claim after sale | `assertClaimable` refuses mismatched chain owner |
-| Paying old owner on settle | `settleStale` always returns `reward: 0n` |
-| Spoofed chain snapshot | Production must read AtomicAssets (or equivalent) on-chain; this lab only types the snapshot |
-| Fake asset id on settle | `assetId` must match the row |
-| Open-ended weight | `MAX_WEIGHT` cap |
+## What the tests close
 
-Production still needs real table storage, auth on register, and a defined policy if the new owner should inherit the stake instead of settling to zero.
+- Claim after the registered owner no longer matches the snapshot.
+- Settle while the owner still matches (would wipe a live stake).
+- Cross-asset snapshots clearing the wrong row.
+- Zero weight, oversized weight, non-positive asset id, asset id above uint64, illegal account name.
+
+## What the tests do not close
+
+- The snapshot is a function argument. Nothing here proves it came from AtomicAssets.
+- No `require_auth`. Anyone who can pass a snapshot can call the pure functions.
+- No persistence. `settleStale` returns a result; it does not delete a table row.
+- No reward token, so there is no insolvency test.
+- Dots in names are accepted. That is looser than the invariant kit.
+
+## Attack to remember
+
+Alice registers asset 7, sells it to Bob, then claims using a **stale** snapshot that still says `alice`. A production action must load owner inside the contract (or from a trusted notification), not from Alice's transaction data.

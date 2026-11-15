@@ -1,21 +1,35 @@
-# Education
+# Education — non-custodial NFT stake
 
-## The pitfall
+## Beginner
 
-Custodial stake contracts take the NFT into the contract account. Non-custodial designs leave the NFT in the user's wallet and only store a **pointer** (asset id + registered owner + weight).
+Custodial stake **takes the NFT**. The contract account becomes `owner` on the AtomicAssets row, so a sale cannot happen underneath the stake.
 
-If the user sells the NFT, the row still says the old owner. Paying that row is stealing yield from the new holder (or paying a seller who no longer holds the risk). Ignoring ownership is the bug this lab isolates.
+Non-custodial stake **leaves the NFT in the wallet** and stores a pointer: asset id, who registered, and a weight. The NFT can still be transferred or sold. If you keep paying the registered name after that, you pay someone who no longer holds the asset.
 
-## The rule
+This lab only answers: given a row and a chain snapshot, may we claim, or must we clear the row for free?
 
-1. Registration does **not** move the asset.
-2. Claim requires a **chain-sourced** owner snapshot that still matches the row.
-3. When the owners differ, **settle** removes the row and pays **zero** to the previous owner.
+## Intermediate
 
-Reward math (MasterChef acc-per-share, emission rates) lives in the custodial lab. This lab only teaches the ownership gate.
+| Function | Writes? | Rule |
+| --- | --- | --- |
+| `registerStake` | Returns a new row | No NFT move. Weight in `[1, 1_000_000]`. Asset id in `[1, 2^64-1]`. Name matches `a-z1-5.` length 1..12, not leading or trailing `.` |
+| `ownerMatches` | No | Same asset id required. Owners compared as strings |
+| `assertClaimable` | No | Match, or throw `owner changed; settle stale row`. Returns the weight for a reward formula that lives elsewhere |
+| `settleStale` | Logical clear | Owners must **differ**. Reward is always `0n`. Previous owner is reported so an indexer can drop the row |
 
-## What this is not
+Reward math (acc-per-share, emission) is [px-stake-nft-custodial-masterchef](https://github.com/pixel-journey/px-stake-nft-custodial-masterchef). Do not copy that formula here until a test asserts it.
 
-- Not a live `get_table_rows` or AtomicAssets API client.
-- Not a transfer or `require_auth` implementation.
-- Not wasm.
+## Masterclass (not in this repo)
+
+- Reading `assets` owner from AtomicAssets (`get_table_rows` or the AA API) inside the action.
+- `require_auth` of the settler, and whether the new owner or anyone may settle.
+- Blocking transfer while staked (that is custodial, or an AtomicAssets notifier that refuses).
+- Paying a pro-rata reward up to the transfer timestamp. This lab pays **zero** on purpose so the ownership bug cannot hide inside rounding.
+
+## Outcomes
+
+1. Explain why a stored owner is not proof of current ownership.
+2. Refuse a claim when the snapshot owner differs.
+3. Clear a stale row with reward 0 rather than paying the seller.
+4. Refuse settle when the owner still matches (that path is claim).
+5. Cite the AtomicAssets asset row as the owner source, and say this repo does not read it.
