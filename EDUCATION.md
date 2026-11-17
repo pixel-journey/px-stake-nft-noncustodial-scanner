@@ -1,5 +1,20 @@
 # Education — non-custodial NFT stake
 
+> **Rung:** `npm test` passes. Snapshot is an argument — not a chain read. No reward token.  
+> **The test is the rule.**
+
+Emission math: [masterchef](https://github.com/pixel-journey/px-stake-nft-custodial-masterchef). Official asset rows: [atomicassets-contract](https://github.com/pinknetworkx/atomicassets-contract) · [AtomicAssets API](https://docs.wax.io/build/api-reference/).
+
+## Learning outcomes
+
+| Level | After this file |
+| --- | --- |
+| Beginner | NFT stays in the wallet; claim needs current owner match |
+| Intermediate | Settle only when owners **differ**; reward 0 on settle |
+| Masterclass | Stale snapshot attack; why this is not emission math |
+
+---
+
 ## Beginner
 
 Custodial stake **takes the NFT**. The contract account becomes `owner` on the AtomicAssets row, so a sale cannot happen underneath the stake.
@@ -17,16 +32,42 @@ This lab only answers: given a row and a chain snapshot, may we claim, or must w
 | `assertClaimable` | No | Match, or throw `owner changed; settle stale row`. Returns the weight for a reward formula that lives elsewhere |
 | `settleStale` | Logical clear | Owners must **differ**. Reward is always `0n`. Previous owner is reported so an indexer can drop the row |
 
-Reward math (acc-per-share, emission) is [px-stake-nft-custodial-masterchef](https://github.com/pixel-journey/px-stake-nft-custodial-masterchef). Do not copy that formula here until a test asserts it.
+## Masterclass
 
-## Masterclass (not in this repo)
+### Not in this repo
 
-- Reading `assets` owner from AtomicAssets (`get_table_rows` or the AA API) inside the action.
+- Reading `assets` owner from AtomicAssets inside the action.
 - `require_auth` of the settler, and whether the new owner or anyone may settle.
 - Blocking transfer while staked (that is custodial, or an AtomicAssets notifier that refuses).
 - Paying a pro-rata reward up to the transfer timestamp. This lab pays **zero** on purpose so the ownership bug cannot hide inside rounding.
 
-## Outcomes
+### Common mistakes
+
+1. Caching owner at deposit time and never re-reading it.  
+2. Paying because the caller string equals the row while the NFT was gifted away.  
+3. Settling while the owner still matches (that path is claim).  
+4. Calling the pattern custodial.  
+5. Copying masterchef emission here without tests.
+
+### Nice-to-have extensions (not in this repo)
+
+| Idea | Note |
+| --- | --- |
+| Harvest-on-transfer | New test; do not change zero reward silently |
+| Template allowlist | Only Pixal templates earn |
+| Multi-collection | Scope the owner read |
+| Claim cooldown | [invariant kit](https://github.com/pixel-journey/px-invariant-kit) |
+
+### Exercises
+
+1. Alice registers asset 7, sells to Bob, claims with snapshot still saying alice — what must production do?  
+2. May `settleStale` run when owners still match? (No.)  
+3. Is reward on settle positive in this lab? (`0n`)  
+4. Where does emission math live? (masterchef)
+
+---
+
+## Outcomes checklist
 
 1. Explain why a stored owner is not proof of current ownership.
 2. Refuse a claim when the snapshot owner differs.
