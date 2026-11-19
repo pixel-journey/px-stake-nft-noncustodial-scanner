@@ -20,6 +20,6 @@ This file is not emission math. That is [masterchef](https://github.com/pixel-jo
 | Lab | Topic |
 | --- | --- |
 | [custodial chef](https://github.com/pixel-journey/px-stake-nft-custodial-masterchef) | Contract holds the NFT; accrue before weight changes |
-| [FT vault](https://github.com/pixel-journey/px-stake-ft-single-sided-vault) | Floor mint / ceil burn |
+| `px-stake-ft-single-sided-vault` (private; not this public course) | Floor mint / ceil burn |
 | [invariant kit](https://github.com/pixel-journey/px-invariant-kit) | Shared gates; stricter names |
-| [treasury path](https://github.com/pixel-journey/px-contract-examples-vault/blob/main/docs/TREASURY-TOKEN-LEARNING-PATH.md) | Curriculum order |
+| `px-contract-examples-vault` (private; not this public course) | Curriculum order |
