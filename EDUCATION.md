@@ -23,14 +23,31 @@ Non-custodial stake **leaves the NFT in the wallet** and stores a pointer: asset
 
 This lab only answers: given a row and a chain snapshot, may we claim, or must we clear the row for free?
 
+```bash
+npm test
+```
+
+---
+
 ## Intermediate
 
 | Function | Writes? | Rule |
-| --- | --- | --- |
-| `registerStake` | Returns a new row | No NFT move. Weight in `[1, 1_000_000]`. Asset id in `[1, 2^64-1]`. Name matches `a-z1-5.` length 1..12, not leading or trailing `.` |
+| --- | --- |
+| `registerStake` | Returns a new row | No NFT move. Weight in `[1, 1_000_000]`. Asset id in `[1, 2^64-1]`. Name matches `a-z1-5.` length 1..12 |
 | `ownerMatches` | No | Same asset id required. Owners compared as strings |
-| `assertClaimable` | No | Match, or throw `owner changed; settle stale row`. Returns the weight for a reward formula that lives elsewhere |
-| `settleStale` | Logical clear | Owners must **differ**. Reward is always `0n`. Previous owner is reported so an indexer can drop the row |
+| `assertClaimable` | No | Match, or throw `owner changed; settle stale row` |
+| `settleStale` | Logical clear | Owners must **differ**. Reward is always `0n` |
+
+### Attack → test
+
+| Attack | Lab behavior |
+| --- | --- |
+| Claim after sale with stale owner | refuse; settle path |
+| Settle while owner still matches | refuse (that is claim) |
+| Positive reward on settle | **0n** by design |
+| Call this custodial | NFT never moved |
+
+---
 
 ## Masterclass
 
@@ -60,17 +77,15 @@ This lab only answers: given a row and a chain snapshot, may we claim, or must w
 
 ### Exercises
 
-1. Alice registers asset 7, sells to Bob, claims with snapshot still saying alice — what must production do?  
-2. May `settleStale` run when owners still match? (No.)  
+1. Alice registers asset 7, sells to Bob, claims with snapshot still saying alice — what must production do? (Re-read owner; refuse claim.)  
+2. May `settleStale` run when owners still match? (**No**.)  
 3. Is reward on settle positive in this lab? (`0n`)  
-4. Where does emission math live? (masterchef)
+4. Where does emission math live? ([masterchef](https://github.com/pixel-journey/px-stake-nft-custodial-masterchef))
 
 ---
 
-## Outcomes checklist
+## What this course will not teach
 
-1. Explain why a stored owner is not proof of current ownership.
-2. Refuse a claim when the snapshot owner differs.
-3. Clear a stale row with reward 0 rather than paying the seller.
-4. Refuse settle when the owner still matches (that path is claim).
-5. Cite the AtomicAssets asset row as the owner source, and say this repo does not read it.
+- Live AtomicAssets owner reads
+- Emission / acc-per-share (masterchef)
+- That a stored owner is proof of current ownership
